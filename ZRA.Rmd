@@ -153,12 +153,19 @@ unlim4 <- unlim4 %>%
   ) %>%
   select(-sum_6_16)
 
-#write.csv(lim3, "C:/Erin/ecosys/Cove/microbes_LIMIT.csv")
-#write.csv(unlim3, "C:/Erin/ecosys/Cove/microbes_UNLIMIT.csv")
+write.csv(lim4, "C:/Erin/ecosys/Cove/microbes_LIMIT.csv")
+write.csv(unlim4, "C:/Erin/ecosys/Cove/microbes_UNLIMIT.csv")
 ```
+#____________
+#New users: SKIP TO HERE
 ##difference
 ```{r}
-#unmet e- demand! These microbes are unsatisfied. 
+#the data files for the previous chunks are too large to upload to GitHub.The resulting CSV files are output and then called into this chunk for subsequent analyses. 
+
+#unmet e- demand! These microbes are unsatisfied.
+lim4<-read.csv("microbes_LIMIT.csv", header = TRUE) 
+unlim4<-read.csv("microbes_UNLIMIT.csv", header = TRUE) 
+
 full_microbes <- full_join(
   unlim4, 
   lim4, 
@@ -191,10 +198,10 @@ full_microbes$ACEFEM_red = ((full_microbes$ACEFEM/full_microbes$ACEFEM_U)*100)
 full_microbes$ACEMET_red = ((full_microbes$ACEMET/full_microbes$ACEMET_U)*100)
 full_microbes$H2MET_red = ((full_microbes$H2MET/full_microbes$H2MET_U)*100)
 
-microbes_reduced <- full_microbes [,-c(6:43)]
+microbes_reduced <- full_microbes [,-c(7:43)]
 
 #cut out U and L only columns, retain just the difference
-microbes <- full_microbes [,-c(6:31)]
+microbes <- full_microbes [,-c(7:34)]
 str(microbes)
 
 microbes <- microbes %>%
