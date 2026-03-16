@@ -1,0 +1,2926 @@
+---
+title: "zra"
+author: "Erin Hassett"
+date: "2025-08-26"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+#READ ME
+```{r}
+#data comes from turning on and off the unlimited and limited microbes in ecosys. 
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(ggpubr)
+```
+#Make dataframes
+##limited
+```{r}
+#cove only data
+getwd()
+setwd("C:/Erin/ecosys/Cove")
+
+lim<-read.delim("microbe.lim.12.14.txt", header = TRUE) 
+
+#limited microbes
+lim2 <- tail(lim, -17217)
+names(lim2)[1] <- "testing"
+max_cols <- max(sapply(strsplit(lim2$testing, " "), length))
+lim3 <- lim2 %>% 
+        separate(testing, into = paste0("V", 1:17), sep = "\\s+", fill = "right")
+lim3 <- lim3 %>% filter(V1 != "NOW")
+lim3 <- lim3 %>% filter(V2 != "SPLIT")
+lim3 <- lim3 %>% select(-1)
+
+colnames(lim3)
+names(lim3)[1] <- "Year"
+lim3$Year<-as.numeric(lim3$Year)
+names(lim3)[2] <- "DOY"
+lim3$DOY <-as.numeric(lim3$DOY)
+names(lim3)[3] <- "HOUR"
+lim3$HOUR <-as.numeric(lim3$HOUR)
+names(lim3)[4] <- "GridCell"
+lim3$GridCell <-as.factor(lim3$GridCell)
+names(lim3)[5] <- "Soil"
+lim3$Soil <-as.factor(lim3$Soil)
+names(lim3)[6] <- "OB_AERO"
+lim3$OB_AERO <-as.numeric(lim3$OB_AERO)
+names(lim3)[7] <- "FAC_AN"
+lim3$FAC_AN <-as.numeric(lim3$FAC_AN)
+names(lim3)[8] <- "FUNGI"
+lim3$FUNGI <-as.numeric(lim3$FUNGI)
+names(lim3)[9] <- "N2FIX"
+lim3$N2FIX <-as.numeric(lim3$N2FIX)
+names(lim3)[10] <- "NH3OX"
+lim3$NH3OX <-as.numeric(lim3$NH3OX)
+names(lim3)[11] <- "NO2OX"
+lim3$NO2OX <-as.numeric(lim3$NO2OX)
+names(lim3)[12] <- "CH4OX"
+lim3$CH4OX <-as.numeric(lim3$CH4OX)
+names(lim3)[13] <- "ACEN2"
+lim3$ACEN2 <-as.numeric(lim3$ACEN2)
+names(lim3)[14] <- "ACEFEM"
+lim3$ACEFEM <-as.numeric(lim3$ACEFEM)
+names(lim3)[15] <- "ACEMET"
+lim3$ACEMET <-as.numeric(lim3$ACEMET)
+names(lim3)[16] <- "H2MET"
+lim3$H2MET <-as.numeric(lim3$H2MET)
+table(lim3$H2MET)
+
+lim3$SoilWidth <- lim3$Soil
+mapping <- setNames(
+  c(0.01, 0.015, 0.02, 0.04), 
+  c(1, 6, 9, 10))
+lim3$SoilWidth <- mapping[as.character(lim3$Soil)]
+
+# Define microbial columns
+microbial_cols <- c("OB_AERO", "FAC_AN", "FUNGI", "N2FIX", 
+                    "NH3OX", "NO2OX", "CH4OX", "ACEN2", 
+                    "ACEFEM", "ACEMET", "H2MET")
+lim4 <-lim3
+# Normalize microbial values by soil width
+lim4[microbial_cols] <- lapply(microbial_cols, function(col) lim4[[col]] / lim4$SoilWidth)
+
+#lim3$SUM <-rowSums(lim3[, 6:16], na.rm = TRUE)
+```
+##unlimited
+```{r}
+unlim<-read.delim("microbe.unlim.12.13.txt", header = TRUE)
+unlim2 <- tail(unlim, -17217)
+names(unlim2)[1] <- "testing"
+max_cols <- max(sapply(strsplit(unlim2$testing, " "), length))
+unlim3 <- unlim2 %>% 
+        separate(testing, into = paste0("V", 1:17), sep = "\\s+", fill = "right")
+unlim3 <- unlim3 %>% filter(V1 != "NOW")
+unlim3 <- unlim3 %>% filter(V2 != "SPLIT")
+unlim3 <- unlim3 %>% select(-1)
+
+colnames(unlim3)
+names(unlim3)[1] <- "Year"
+unlim3$Year<-as.numeric(unlim3$Year)
+names(unlim3)[2] <- "DOY"
+unlim3$DOY <-as.numeric(unlim3$DOY)
+names(unlim3)[3] <- "HOUR"
+unlim3$HOUR <-as.numeric(unlim3$HOUR)
+names(unlim3)[4] <- "GridCell"
+unlim3$GridCell <-as.factor(unlim3$GridCell)
+names(unlim3)[5] <- "Soil"
+unlim3$Soil <-as.factor(unlim3$Soil)
+names(unlim3)[6] <- "OB_AERO"
+unlim3$OB_AERO <-as.numeric(unlim3$OB_AERO)
+names(unlim3)[7] <- "FAC_AN"
+unlim3$FAC_AN <-as.numeric(unlim3$FAC_AN)
+names(unlim3)[8] <- "FUNGI"
+unlim3$FUNGI <-as.numeric(unlim3$FUNGI)
+names(unlim3)[9] <- "N2FIX"
+unlim3$N2FIX <-as.numeric(unlim3$N2FIX)
+names(unlim3)[10] <- "NH3OX"
+unlim3$NH3OX <-as.numeric(unlim3$NH3OX)
+names(unlim3)[11] <- "NO2OX"
+unlim3$NO2OX <-as.numeric(unlim3$NO2OX)
+names(unlim3)[12] <- "CH4OX"
+unlim3$CH4OX <-as.numeric(unlim3$CH4OX)
+names(unlim3)[13] <- "ACEN2"
+unlim3$ACEN2 <-as.numeric(unlim3$ACEN2)
+names(unlim3)[14] <- "ACEFEM"
+unlim3$ACEFEM <-as.numeric(unlim3$ACEFEM)
+names(unlim3)[15] <- "ACEMET"
+unlim3$ACEMET <-as.numeric(unlim3$ACEMET)
+names(unlim3)[16] <- "H2MET"
+unlim3$H2MET <-as.numeric(unlim3$H2MET)
+table(unlim3$H2MET)
+
+unlim3$SoilWidth <- unlim3$Soil
+mapping <- setNames(
+  c(0.01, 0.015, 0.02, 0.04), 
+  c(1, 6, 9, 10))
+unlim3$SoilWidth <- mapping[as.character(unlim3$Soil)]
+
+unlim4 <-unlim3
+# Normalize microbial values by soil width
+unlim4[microbial_cols] <- lapply(microbial_cols, function(col) unlim4[[col]] / unlim4$SoilWidth)
+
+
+unlim4 <- unlim4 %>%
+  mutate(
+    sum_6_16 = rowSums(across(6:16), na.rm = TRUE),
+    perc_ace     = .[[15]] / sum_6_16,
+    perc_hydr   = .[[16]] / sum_6_16,
+    perc_methox = .[[12]] / sum_6_16
+  ) %>%
+  select(-sum_6_16)
+
+#write.csv(lim3, "C:/Erin/ecosys/Cove/microbes_LIMIT.csv")
+#write.csv(unlim3, "C:/Erin/ecosys/Cove/microbes_UNLIMIT.csv")
+```
+##difference
+```{r}
+#unmet e- demand! These microbes are unsatisfied. 
+full_microbes <- full_join(
+  unlim4, 
+  lim4, 
+  by = c("Year", "DOY", "HOUR", "GridCell","Soil"), 
+  suffix = c("_U", "_L"))
+
+#subttract unlimited from limited to get stressed microbes
+full_microbes$OB_AERO = (full_microbes$OB_AERO_U-full_microbes$OB_AERO_L)
+full_microbes$FAC_AN = (full_microbes$FAC_AN_U-full_microbes$FAC_AN_U)
+full_microbes$FUNGI = (full_microbes$FUNGI_U-full_microbes$FUNGI_L)
+full_microbes$N2FIX = (full_microbes$N2FIX_U-full_microbes$N2FIX_L)
+full_microbes$NH3OX = (full_microbes$NH3OX_U-full_microbes$NH3OX_L)
+full_microbes$NO2OX = (full_microbes$NO2OX_U-full_microbes$NO2OX_L)
+full_microbes$CH4OX = (full_microbes$CH4OX_U-full_microbes$CH4OX_L)
+full_microbes$ACEN2 = (full_microbes$ACEN2_U-full_microbes$ACEN2_L)
+full_microbes$ACEFEM = (full_microbes$ACEFEM_U-full_microbes$ACEFEM_L)
+full_microbes$ACEMET = (full_microbes$ACEMET_U-full_microbes$ACEMET_L)
+full_microbes$H2MET = (full_microbes$H2MET_U-full_microbes$H2MET_L)
+
+#calculatng the percent reduced
+full_microbes$OB_AERO_red = ((full_microbes$OB_AERO/full_microbes$OB_AERO_U)*100)
+full_microbes$FAC_AN_red = ((full_microbes$FAC_AN/full_microbes$FAC_AN_U)*100)
+full_microbes$FUNGI_red = ((full_microbes$FUNGI/full_microbes$FUNGI_U)*100)
+full_microbes$N2FIX_red = ((full_microbes$N2FIX/full_microbes$N2FIX_U)*100)
+full_microbes$NH3OX_red = ((full_microbes$NH3OX/full_microbes$NH3OX_U)*100)
+full_microbes$NO2OX_red = ((full_microbes$NO2OX/full_microbes$NO2OX_U)*100)
+full_microbes$CH4OX_red = ((full_microbes$CH4OX/full_microbes$CH4OX_U)*100)
+full_microbes$ACEN2_red = ((full_microbes$ACEN2/full_microbes$ACEN2_U)*100)
+full_microbes$ACEFEM_red = ((full_microbes$ACEFEM/full_microbes$ACEFEM_U)*100)
+full_microbes$ACEMET_red = ((full_microbes$ACEMET/full_microbes$ACEMET_U)*100)
+full_microbes$H2MET_red = ((full_microbes$H2MET/full_microbes$H2MET_U)*100)
+
+microbes_reduced <- full_microbes [,-c(6:43)]
+
+#cut out U and L only columns, retain just the difference
+microbes <- full_microbes [,-c(6:31)]
+str(microbes)
+
+microbes <- microbes %>%
+  mutate(
+    Date = as.Date(DOY - 1, origin = paste0(Year, "-01-01")),
+    Datetime = Date + hours(HOUR - 1)  # adjust if HOUR is 1–24
+  )
+```
+#OPEN plots (full 2023, no ZRA)
+##unlimited
+```{r}
+Soil1_open_U<-unlim4 %>%
+  filter(Soil=="1" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET),
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_U$time_hour <- as.Date(Soil1_open_U$DOY - 1, origin = paste0(Soil1_open_U$Year, "-01-01")) + hours(Soil1_open_U$HOUR - 1)
+
+Soil1_open_U2 <- Soil1_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+df1_long_U <- Soil1_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+df1_long_U2 <- Soil1_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U1<-ggplot(df1_long_U2, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+  ylim(0,0.45)+
+  labs(title = "0.01 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))
+    scale_fill_manual(
+  name = "Microbial Functional Type",
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_U<-unlim4 %>%
+  filter(Soil=="6" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET),
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_U$time_hour <- as.Date(Soil6_open_U$DOY - 1, origin = paste0(Soil6_open_U$Year, "-01-01")) + hours(Soil6_open_U$HOUR - 1)
+
+Soil6_open_U2 <- Soil6_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+
+df6_long_U <- Soil6_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df6_long_U2 <- Soil6_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U6<-ggplot(df6_long_U2, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+    ylim(0,0.45)+
+  labs(title = "0.08 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+    #legend.position = "bottom",
+    #legend.box = "horizontal",
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank())+
+  # Change legend item names using scale_color_manual
+  scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+  #  axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_U<-unlim4 %>%
+  filter(Soil=="9" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_U$time_hour <- as.Date(Soil9_open_U$DOY - 1, origin = paste0(Soil6_open_U$Year, "-01-01")) + hours(Soil9_open_U$HOUR - 1)
+Soil9_open_U2 <- Soil9_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+
+df9_long_U <- Soil9_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df9_long_U2 <- Soil9_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U9<-ggplot(df9_long_U2, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+    ylim(0,0.45)+
+  labs(title = "0.15 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+   # legend.position = "bottom",
+  #  legend.box = "horizontal",
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) +
+    scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+ # guides(fill = guide_legend(nrow = 1))
+
+# SOIL LAYER 10
+U10<-Soil10_open_U<-unlim4 %>%
+  filter(Soil=="10" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_U$time_hour <- as.Date(Soil10_open_U$DOY - 1, origin = paste0(Soil10_open_U$Year, "-01-01")) + hours(Soil10_open_U$HOUR - 1)
+
+Soil10_open_U2 <- Soil10_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+
+df10_long_U <- Soil10_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df10_long_U2 <- Soil10_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U10<-ggplot(df10_long_U2, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+    ylim(0,0.45)+
+  labs(title = "0.2 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+      axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  #  legend.position = "bottom",
+  #  legend.box = "horizontal",
+    #axis.title.x=element_blank(),
+    #axis.text.x=element_blank())
+    #axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+  scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+U10b<-ggplot(df10_long_U, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.2 m (TEA-Unstressed)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(
+   # legend.position = "bottom",
+  #  legend.box = "horizontal",
+    axis.title.x=element_blank()) 
+#  guides(fill = guide_legend(nrow = 1))
+
+#ggarrange(U1,U6,U9,U10, common.legend = TRUE)
+```
+
+##difference
+```{r}
+Soil1_open_D<-microbes %>%
+  filter(Soil=="1" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_D$datetime <- as.Date(Soil1_open_D$DOY - 1, origin = paste0(Soil1_open_D$Year, "-01-01")) + hours(Soil1_open_D$HOUR - 1)
+Soil1_open_D2 <- Soil1_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df1_long_D2 <- Soil1_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D1<-ggplot(df1_long_D2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+   # ylim(0,2.5)+
+  labs(title = "0.01 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.text.y = element_blank(),
+    axis.title.x=element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x=element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))+
+  scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_D<-microbes %>%
+  filter(Soil=="6" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_D$datetime <- as.Date(Soil6_open_D$DOY - 1, origin = paste0(Soil6_open_D$Year, "-01-01")) + hours(Soil6_open_D$HOUR - 1)
+
+Soil6_open_D2 <- Soil6_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df6_long_D <- Soil6_open_D %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df6_long_D2 <- Soil6_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D6<-ggplot(df6_long_D2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+    ylim(0,0.45)+
+  labs(title = "0.08 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+   theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+    #legend.position = "bottom",
+    #legend.box = "horizontal",
+    axis.title.x=element_blank(), 
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.title.y= element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))+
+    scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_D<-microbes %>%
+  filter(Soil=="9" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_D$datetime <- as.Date(Soil9_open_D$DOY - 1, origin = paste0(Soil9_open_D$Year, "-01-01")) + hours(Soil9_open_D$HOUR - 1)
+
+Soil9_open_D2 <- Soil9_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df9_long_D <- Soil9_open_D %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df9_long_D2 <- Soil9_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D9<-ggplot(df9_long_D2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+  ylim(0,0.45)+
+  labs(title = "0.15 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y=element_blank(),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+    scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+  #guides(fill = guide_legend(nrow = 1))
+# SOIL LAYER 10
+Soil10_open_D<-microbes %>%
+  filter(Soil=="10" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_D$datetime <- as.Date(Soil10_open_D$DOY - 1, origin = paste0(Soil10_open_D$Year, "-01-01")) + hours(Soil10_open_D$HOUR - 1)
+
+Soil10_open_D2 <- Soil10_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df10_long_D <- Soil10_open_D %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df10_long_D2 <- Soil10_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D10<-ggplot(df10_long_D2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+  ylim(0,0.45)+
+  labs(title = "0.2 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.y=element_blank(),
+    #axis.text.x=element_blank(),
+    axis.title.y= element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))
+  scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+```
+##percent reduced
+```{r}
+Soil1_open_R<-microbes_reduced %>%
+  filter(Soil=="1" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO_red, FAC_AN_red, FUNGI_red, N2FIX_red,NH3OX_red,NO2OX_red, CH4OX_red, ACEN2_red, ACEFEM_red, ACEMET_red, H2MET_red ), ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+#View(Soil1_open_R2)
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_R$datetime <- as.Date(Soil1_open_R$DOY - 1, origin = paste0(Soil1_open_R$Year, "-01-01")) + hours(Soil1_open_R$HOUR - 1)
+
+Soil1_open_R2 <- Soil1_open_R %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX_red,ACEMET_red,H2MET_red, datetime)
+
+df1_long_R2 <- Soil1_open_R2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+R1<-ggplot(df1_long_R2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+   # ylim(0,2.5)+
+  labs(title = "0.01 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.text.y = element_blank(),
+    axis.title.x=element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x=element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))+
+  scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_R<-microbes_reduced %>%
+  filter(Soil=="6" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO_red, FAC_AN_red, FUNGI_red,
+                     N2FIX_red,NH3OX_red, NO2OX_red,
+                     CH4OX_red, ACEN2_red, ACEFEM_red,
+                     ACEMET_red, H2MET_red ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_R$datetime <- as.Date(Soil6_open_R$DOY - 1, origin = paste0(Soil6_open_R$Year, "-01-01")) + hours(Soil6_open_R$HOUR - 1)
+
+Soil6_open_R2 <- Soil6_open_R %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX_red,ACEMET_red,H2MET_red, datetime)
+
+#df6_long_R <- Soil6_open_R %>%
+#  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df6_long_R2 <- Soil6_open_R2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+View(Soil10_open_R2)
+
+R6<-ggplot(df6_long_R2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+    ylim(0,0.45)+
+  labs(title = "0.08 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+   theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+    #legend.position = "bottom",
+    #legend.box = "horizontal",
+    axis.title.x=element_blank(), 
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.title.y= element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))+
+    scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_R<-microbes_reduced %>%
+  filter(Soil=="9" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO_red, FAC_AN_red, FUNGI_red, N2FIX_red,NH3OX_red, 
+                     NO2OX_red, CH4OX_red, ACEN2_red, ACEFEM_red, ACEMET_red,
+                     H2MET_red), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_R$datetime <- as.Date(Soil9_open_R$DOY - 1, origin = paste0(Soil9_open_R$Year, "-01-01")) + hours(Soil9_open_R$HOUR - 1)
+
+Soil9_open_R2 <- Soil9_open_R %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX_red,ACEMET_red,H2MET_red, datetime)
+
+#df9_long_R2 <- Soil9_open_R2 %>%
+#  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df9_long_R2 <- Soil9_open_R2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+R9<-ggplot(df9_long_R2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+  #ylim(0,0.45)+
+  labs(title = "0.15 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y=element_blank(),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+    scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+
+  #guides(fill = guide_legend(nrow = 1))
+# SOIL LAYER 10
+Soil10_open_R<-microbes_reduced %>%
+  filter(Soil=="10" & GridCell=="3")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO_red, FAC_AN_red, FUNGI_red, N2FIX_red,NH3OX_red, 
+                     NO2OX_red, CH4OX_red, ACEN2_red, ACEFEM_red, ACEMET_red,
+                     H2MET_red), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_R$datetime <- as.Date(Soil10_open_R$DOY - 1, origin = paste0(Soil10_open_R$Year, "-01-01")) + hours(Soil10_open_R$HOUR - 1)
+
+Soil10_open_R2 <- Soil10_open_R %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX_red,ACEMET_red,H2MET_red, datetime)
+
+#df10_long_R2 <- Soil10_open_R2 %>%
+#  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df10_long_R2 <- Soil10_open_R2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+R10<-ggplot(df10_long_R2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+  #ylim(0,0.45)+
+  labs(title = "0.2 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.y=element_blank(),
+    #axis.text.x=element_blank(),
+    axis.title.y= element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))
+  scale_fill_manual(
+  name = "Microbial Functional Type",   # ← this changes the legend title
+  labels = c("Acetoclastic methanogens", "Methane oxidizers", "Hydrogenotrophic methanogens"),
+  values = c("ACEMET" = "skyblue",
+             "CH4OX" = "seagreen",
+             "H2MET" = "chocolate2"))
+```
+
+#Figure 5 
+```{r}
+library(patchwork)
+library(grid)
+#ggarrange(D1,D6,D9,D10, common.legend = TRUE)
+#plot1<-ggarrange(U1,L1,D1, common.legend = TRUE, nrow=3)
+#plot6<-ggarrange(U6,L6,D6, common.legend = TRUE, nrow=3)
+#plot9<-ggarrange(U9,L9,D9, common.legend = TRUE, nrow=3)
+#plot10<-ggarrange(U10,L10,D10, common.legend = TRUE, nrow=3)
+
+#Figure 5
+allplots<-ggarrange(U1,D1,U6,D6, U9,  D9,U10, D10,  common.legend=TRUE,legend="right", nrow=4,ncol=2, labels ="AUTO")
+
+```
+#e-acceptor full year
+##no3
+```{r}
+#output from Tim's updated source code
+no3 <- read.delim("NO3.12.16.txt", header = TRUE, sep = ",", dec = ".")
+no3 <- tail(no3, -17265)
+names(no3)[1] <- "testing"
+max_cols <- max(sapply(strsplit(no3$testing, " "), length))
+no3b <- no3 %>% 
+        separate(testing, into = paste0("V", 1:9), sep = "\\s+", fill = "right")
+no3b <- no3b %>% filter(V1 != "NOW")
+no3b <- no3b %>% filter(V1 != "CONVERGENCE")
+no3b <- no3b %>% filter(V2 != "SPLIT")
+no3b <- no3b %>% select(-1)
+
+colnames(no3b)
+names(no3b)[1] <- "NO3.YYYY"
+names(no3b)[2] <- "DOY"
+names(no3b)[3] <- "Hour"
+names(no3b)[4] <- "Gridcell" #only #3
+names(no3b)[5] <- "NY" #always 1
+names(no3b)[6] <- "L"
+names(no3b)[7] <- "ZNO3S"
+names(no3b)[8] <- "Bulk"
+no3b$ZNO3S <-as.numeric(no3b$ZNO3S)
+#names(no3b)[9] <- "CNO3"
+#no3b$CNO3 <-as.numeric(no3b$CNO3)
+#names(no3b)[10] <- "CNO3S"
+#no3b$CNO3S <-as.numeric(no3b$CNO3S)
+
+#CNO3S= total concentrations in non-band (g/m3)
+#ZNO3S =total No3 in non-band zones (divided by volumne)= grams of N
+
+no3b$Year <- 2023
+no3b$DOY <-as.numeric(no3b$DOY)
+no3b$Hour <-as.numeric(no3b$Hour)
+no3b <- no3b %>%
+   mutate(
+    time_hour = ymd(paste0(Year, "-01-01")) + days(DOY - 1) + hours(Hour))
+
+no3_1<- no3b %>% 
+  filter(L ==1) %>% 
+  group_by(time_hour) %>%
+  summarise(
+    ZNO3S1 = mean(ZNO3S, na.rm = TRUE),
+    .groups = "drop")
+no3_6<- no3b %>% 
+  filter(L ==6)%>% 
+  group_by(time_hour) %>%
+  summarise(
+    ZNO3S6 = mean(ZNO3S, na.rm = TRUE),
+    .groups = "drop")
+no3_9<- no3b %>% filter(L ==9)%>% 
+  group_by(time_hour) %>%
+  summarise(
+    ZNO3S9 = mean(ZNO3S, na.rm = TRUE),
+    .groups = "drop")
+no3_10<- no3b %>% filter(L ==10)%>% 
+  group_by(time_hour) %>%
+  summarise(
+    ZNO3S10 = mean(ZNO3S, na.rm = TRUE),
+    .groups = "drop")
+
+plot(no3_1$ZNO3S1, main = "No3, Layer 1")
+plot(no3_6$ZNO3S6, main = "No3, Layer 6")
+plot(no3_9$ZNO3S9, main = "No3, Layer 9")
+plot(no3_10$ZNO3S10, main = "No3, Layer 10")
+
+#The Full Year NO3
+ggplot(no3b, aes(x =time_hour , y = ZNO3S, color = factor(L))) +
+  geom_line(size = 1) +
+  scale_color_manual(
+    values = c("1" = "blue", "6" = "red", "9" = "green", "10" = "purple"),
+    name = "Depth") +
+  labs(
+    x = "Time",
+    y = expression(NO[3]~""~"(" * mg~L^-1 * ")"),
+    title = "Nitrate at Different Depths") +
+  theme_bw() +
+  theme(
+    legend.position = "right",
+    plot.title = element_text(hjust = 0.5))
+
+```
+##O2 and water
+```{r}
+oxygen<-read.delim("030102023hc", header = TRUE, sep = "", dec = ".")
+oxygen$DATE <-as.numeric(oxygen$DATE)
+oxygen$DATE <- dmy(oxygen$DATE)
+oxygen <- oxygen %>%
+  mutate(time_hour = DATE + hours(HOUR - 1))
+
+waterb<-read.delim("level_2023", header = FALSE, sep = ",", dec = ".")
+water<-read.csv("level_2023c.csv", header = FALSE, sep = ",", dec = ".")
+
+water$time_hour <-oxygen$time_hour
+
+water_p <- ggplot(water, aes(x = time_hour, y = V3, fill = V3)) +
+  geom_line() +
+  labs(title="2023 Water Level",y="Level (m)")+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+oxygen_1 <- ggplot(oxygen, aes(x = DOY, y = O2_1)) +
+  geom_point() +
+  labs(title="2023 Oxygen Concentration | Soil-Water interface", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+
+oxygen_6 <- ggplot(oxygen, aes(x = DOY, y = O2_6)) +
+  geom_line() +
+  labs(title="2023 Oxygen Concentration | 0.08 m", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+oxygen_9 <- ggplot(oxygen, aes(x = DOY, y = O2_9)) +
+  geom_line() +
+  labs(title="2023 Oxygen Concentration | 0.15 m", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+oxygen_10 <- ggplot(oxygen, aes(x = DOY, y = O2_10)) +
+  geom_line() +
+  labs(title="2023 Oxygen Concentration | 0.2 m", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(#axis.title.x = element_blank(),
+        #axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+```
+#ZRA, e-, ecosys
+```{r}
+library(scales)
+
+#need to compare the field data (ZRA data) to the ecosys data with the ZRA layers. 
+ZRA_df<- read.csv("summer2023.csv")
+ZRA_df$pair <-as.factor(ZRA_df$pair)
+ZRA_df$time<- mdy_hm(ZRA_df$time)
+ZRA_df <- ZRA_df %>%
+  mutate(time_hour = floor_date(time, unit = "hour"))
+
+merged_ZRA <- ZRA_df %>%
+  left_join(oxygen %>% select(time_hour, O2_1, O2_6, O2_9, O2_10),by = "time_hour") %>%
+  left_join(water %>% select(time_hour, water=V3),by = "time_hour")%>%
+  left_join(no3_1 %>% select(time_hour, ZNO3S1=ZNO3S1),by = "time_hour")%>%
+  left_join(no3_6 %>% select(time_hour, ZNO3S6=ZNO3S6),by = "time_hour")%>%
+  left_join(no3_9 %>% select(time_hour, ZNO3S9=ZNO3S9),by = "time_hour")%>%
+   left_join(no3_10 %>% select(time_hour, ZNO3S10=ZNO3S10),by = "time_hour")
+
+ZRA_1<-merged_ZRA %>%
+  filter(pair=="2 to 4")%>%
+  mutate(HOUR= hour(time),
+         DOY = yday(time))
+
+ZRA_6<-merged_ZRA %>%
+  filter(pair=="2 to 78.2")%>%
+  mutate(HOUR= hour(time),
+         DOY = yday(time))
+
+ZRA_9<-merged_ZRA %>%
+    filter(pair=="2 to 154.4")%>%
+  mutate(HOUR= hour(time),
+         DOY = yday(time))
+
+ZRA_10<-merged_ZRA %>%
+    filter(pair=="2 to 228.6")%>%
+  mutate(HOUR= hour(time),
+         DOY = yday(time))
+#plot(ZRA_short$time,ZRA_short$potential, type="l")
+
+```
+##current ~ water
+```{r}
+na_water <- lm(potential ~ water, data = ZRA_10)
+summary(na_water)
+m  <- coef(na_water)[2]  # slope
+b  <- coef(na_water)[1]  # intercept
+r2 <- summary(na_water)$r.squared
+
+na_water10<-ggplot(ZRA_10, aes(x=water, y=potential)) +
+ geom_point() +
+  geom_smooth(method = "lm", se = TRUE,color = "black")+
+ # ylim(2.5,5.5)+
+  theme_bw() +
+  theme(axis.text.x = element_text(hjust = 1),
+        plot.title = element_text(hjust=0.5))+
+  labs(x = "Water (mg/L)",
+      y = "ZRA Current (nA)")+
+  annotate("text", 
+        x = 0.6, y = 2200, hjust = 1.1, vjust = -0.5,
+        label = paste0("Slope = ", round(m, 2),
+                       "\nY-int = ", round(b, 2),
+                          "\nR² = ", round(r2, 2)))
+
+#ggarrange(na_water1,na_water6,na_water9,na_water10, nrow=4, ncol=1, labels="AUTO")
+```
+##Difference+ZRA
+###group by
+```{r}
+#this uses only the DIFFERENCE (unlimited- limited microbial activity)! 
+short1<-microbes %>%
+  filter(Soil == "1", GridCell %in% c("2", "3")) %>%
+  group_by(Year, DOY, HOUR, GridCell, Soil) %>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX, NH3OX, NO2OX, 
+                     CH4OX, ACEN2, ACEFEM, ACEMET, H2MET),
+                   ~ mean(.x, na.rm = TRUE)), .groups = "drop")
+
+short6<-microbes %>%
+  filter(Soil=="6" & GridCell %in% c("2", "3"))%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX,NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ),
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+
+short9<-microbes %>%
+  filter(Soil=="9" & GridCell %in% c("2", "3"))%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX,NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ),  ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+
+short10<-microbes %>%
+  filter(Soil=="10" & GridCell %in% c("2", "3"))%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+
+# merge two dataframes together (ecosys and chelsea's data)
+complete1<-merge(x = short1, y = ZRA_1, by=c("DOY","HOUR"))
+complete6<-merge(x = short6, y = ZRA_6, by=c("DOY","HOUR"))
+complete9<-merge(x = short9, y = ZRA_9, by=c("DOY","HOUR"))
+complete10<-merge(x = short10, y = ZRA_10, by=c("DOY","HOUR"))
+
+#pivot longer to make stacked plots
+microbe_long1 <- complete1 %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+microbe_long6 <- complete6 %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+microbe_long9 <- complete9 %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+microbe_long10 <- complete10 %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+```
+###merging e- acceptors
+```{r}
+# Pivot longer
+oxygen_long <- complete1 %>%
+  filter(GridCell=="2")%>%
+  pivot_longer(cols = c(O2_6, O2_9, O2_10),
+               names_to = "O2_Depth",
+               values_to = "O2_value")
+oxygen_long <- oxygen_long %>%
+  mutate(
+    O2_Depth = recode(O2_Depth,
+                   "O2_10"  = "Layer 10",
+                   "O2_6"  = "Layer 6",
+                   "O2_9"  = "Layer 9"),
+    O2_Depth = factor(O2_Depth, levels = c("Layer 6", "Layer 9", "Layer 10")))
+
+O2_all<-ggplot(oxygen_long, aes(x = time, y = O2_value, color="O2_Depth")) +
+  geom_line(size=1) +
+  #geom_jitter()+
+  labs(y = expression(O[2]~""~"(" * mg~L^-1 * ")")) +
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+#ggarrange(water_p, oxygen_6, oxygen_9, oxygen_10, nrow=4, align = "h", common.legend = FALSE)
+
+# Pivot longer
+No3_long <- complete1 %>%
+    filter(GridCell=="3")%>%
+  pivot_longer(cols = c(ZNO3S1, ZNO3S6, ZNO3S9,ZNO3S10),
+               names_to = "NO3_Depth",
+               values_to = "NO3_value")
+No3_long$NO3_Depth <-as.factor(No3_long$NO3_Depth )
+levels(No3_long$NO3_Depth )
+
+No3_long <- No3_long %>%
+  mutate(
+    NO3_Depth = recode(NO3_Depth,
+                   "ZNO3S1"  = "Layer 1",
+                   "ZNO3S6"  = "Layer 6",
+                   "ZNO3S9"  = "Layer 9",
+                   "ZNO3S10" = "Layer 10"),
+    NO3_Depth = factor(NO3_Depth, levels = c("Layer 1", "Layer 6", "Layer 9", "Layer 10"))
+  )
+
+NO3_all<-ggplot(No3_long, aes(x = time_hour, y = NO3_value, color = NO3_Depth)) +
+  geom_line(size=1) +
+  geom_jitter()+
+  labs(y = expression(N~""~"(" * mg~L^-1 * ")"),
+       color= "Depth") +
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+```
+#Line graphs
+##Make datetime
+```{r}
+#create datetime= same HOUR for ZRA
+microbe_long1 <- microbe_long1 %>%
+  mutate(
+    datetime = as.POSIXct(paste(Year, DOY, HOUR),
+                          format = "%Y %j %H"))
+
+microbe_long6 <- microbe_long6 %>%
+  mutate(
+    datetime = as.POSIXct(paste(Year, DOY, HOUR),
+                          format = "%Y %j %H"))
+
+microbe_long9 <- microbe_long9 %>%
+  mutate(
+    datetime = as.POSIXct(paste(Year, DOY, HOUR),
+                          format = "%Y %j %H"))
+
+microbe_long10 <- microbe_long10 %>%
+  mutate(
+    datetime = as.POSIXct(paste(Year, DOY, HOUR),
+                          format = "%Y %j %H"))
+```
+##scaling
+```{r}
+overlap_factor <- 4  # Adjust this value until lines overlap properly
+
+#define a scaling factor so both variables fit visually
+#scale_factor1 <- max(microbe_long1$Value, na.rm = TRUE) /max(microbe_long1$potential, na.rm = TRUE)
+
+#scale_factor6 <- max(microbe_long6$Value, na.rm = TRUE) /max(microbe_long6$potential, na.rm = TRUE)
+
+#scale_factor9 <- max(microbe_long9$Value, na.rm = TRUE) /max(microbe_long9$potential, na.rm = TRUE)
+
+
+#scale_factor10 <- max(microbe_long10$Value, na.rm = TRUE) /max(microbe_long10$potential, na.rm = TRUE)
+
+```
+##Line graphs
+```{r}
+# Sum across microbes at each datetime
+#Layer 1
+microbe_sum1 <- microbe_long1 %>%
+  group_by(GridCell, datetime) %>%
+  summarise(
+    total_microbes = sum(Value, na.rm = TRUE),
+    potential = mean(potential, na.rm = TRUE),
+    .groups = "drop")
+
+scale_factor1 <- diff(range(microbe_sum1$total_microbes, na.rm = TRUE)) /diff(range(microbe_sum1$potential, na.rm = TRUE))
+scale_factor1_adjusted <- scale_factor1 * overlap_factor
+
+line1 <- ggplot(microbe_sum1, aes(x = datetime)) +
+  geom_line(aes(y = total_microbes, color = GridCell),linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor1, color = "ZRA Data"),linewidth = 0.7)+
+  labs(y = expression(g~C~soil~h^{-1}))+
+  scale_y_continuous(
+    sec.axis = sec_axis(~ . / scale_factor1, name = "Current (nA)")) +
+scale_color_manual(
+  name = "Grid Cell",
+  values = c(
+    "2" = "darkgreen",
+    "3" = "darkorange3",
+    "ZRA Data" = "black"),
+  labels = c(
+   "2" = "Model: Plant grid cell",
+    "3" = "Model: Open water grid cell",
+    "ZRA Data" = "Observed: ZRA Data"))+
+  theme_bw() +
+  theme(text = element_text(size = 14, family = "serif"),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+       # axis.text.y.right = element_blank(),
+       # axis.title.y.right = element_blank(),
+        legend.title=element_blank())
+
+
+#LAYER 6
+microbe_sum6 <- microbe_long6 %>%
+  group_by(GridCell, datetime) %>%
+  summarise(total_microbes = sum(Value, na.rm = TRUE),
+            potential = mean(potential, na.rm = TRUE))
+scale_factor6 <- diff(range(microbe_sum6$total_microbes, na.rm = TRUE)) / diff(range(microbe_sum6$potential, na.rm = TRUE))
+scale_factor6_adjusted <- scale_factor6 * overlap_factor
+
+line6<-ggplot(microbe_sum6, aes(x = datetime)) +
+  geom_line(aes(y = total_microbes, color = GridCell),linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor6, color = "ZRA Data"),linewidth = 0.7) +
+    labs(y = expression(g~C~soil~h^{-1}))+
+scale_y_continuous(
+   sec.axis = sec_axis(~ ./scale_factor6, name = "Current (nA)"))+
+  theme_minimal() +
+  scale_color_manual(
+  name = "Grid Cell",
+  values = c(
+    "2" = "darkgreen",
+    "3" = "darkorange3",
+    "ZRA Data" = "black"),
+  labels = c(
+   "2" = "Model: Plant grid cell",
+    "3" = "Model: Open water grid cell",
+    "ZRA Data" = "Observed: ZRA Data"))+
+ theme_bw()+
+  theme(text = element_text(size = 14,family = "serif"),
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_blank(),
+    axis.title.x=element_blank(),
+       # axis.text.y.right = element_blank(),
+       # axis.title.y.right = element_blank(),
+    legend.title=element_blank())+
+  guides(fill = guide_legend(nrow = 1))
+
+
+microbe_sum9 <- microbe_long9 %>%
+  group_by(GridCell, datetime) %>%
+  summarise(total_microbes = sum(Value, na.rm = TRUE),
+            potential = mean(potential, na.rm = TRUE))
+scale_factor9 <- diff(range(microbe_sum9$total_microbes, na.rm = TRUE)) /
+                 diff(range(microbe_sum9$potential, na.rm = TRUE))
+scale_factor9_adjusted <- scale_factor9 * overlap_factor
+
+line9<-ggplot(microbe_sum9, aes(x = datetime)) +
+  geom_line(aes(y = total_microbes, color = GridCell),linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor9, color = "ZRA Data"),linewidth = 0.7) +
+    labs(y = expression(g~C~soil~h^{-1}))+
+scale_y_continuous(
+    sec.axis = sec_axis(~ . / scale_factor9, name = "Current (nA)"))+
+   scale_color_manual(
+  name = "Grid Cell",
+  values = c(
+    "2" = "darkgreen",
+    "3" = "darkorange3",
+    "ZRA Data" = "black"),
+  labels = c(
+   "2" = "Model: Plant grid cell",
+    "3" = "Model: Open water grid cell",
+    "ZRA Data" = "Observed: ZRA Data"))+
+ theme_minimal() +
+ theme_bw()+
+ theme(text = element_text(size = 14,family = "serif"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x = element_blank())+
+      #  axis.text.y.right = element_blank())+
+       # axis.title.y.right = element_blank())+
+    guides(fill = guide_legend(nrow = 1))
+
+microbe_sum10 <- microbe_long10 %>%
+  group_by(GridCell, datetime) %>%
+  summarise(total_microbes = sum(Value, na.rm = TRUE),
+            potential = mean(potential, na.rm = TRUE))
+scale_factor10 <- diff(range(microbe_sum10$total_microbes, na.rm = TRUE)) /
+                 diff(range(microbe_sum10$potential, na.rm = TRUE))
+scale_factor10_adjusted <- scale_factor10 * overlap_factor
+
+line10<-ggplot(microbe_sum10, aes(x = datetime)) +
+  geom_line(aes(y = total_microbes, 
+                color =  GridCell),linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor10, color = "ZRA Data"),linewidth = 0.7) +
+  labs(y = expression(g~C~soil~h^{-1}))+
+ scale_y_continuous(
+    sec.axis = sec_axis(~ . / scale_factor10, name = "Current (nA)"))+
+    scale_color_manual(
+  name = "Grid Cell",
+  values = c(
+    "2" = "darkgreen",
+    "3" = "darkorange3",
+    "ZRA Data" = "black"),
+  labels = c(
+   "2" = "Model: Plant grid cell",
+    "3" = "Model: Open water grid cell",
+    "ZRA Data" = "Observed: ZRA Data"))+
+  theme_minimal() +
+ theme_bw()+
+theme(text = element_text(size = 14,family = "serif"),
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank())+
+        #axis.text.y.right = element_blank(),
+       # axis.title.y.right = element_blank())+
+  guides(fill = guide_legend(nrow = 1))
+```
+#Figure 6 Plot
+```{r}
+line_final_D<-ggarrange(line1,line6,line9,line10, nrow=4,ncol=1, align="hv", labels="AUTO", common.legend=TRUE, legend="right")
+#line_final_Db<- annotate_figure(line_final_D)
+                               #top = text_grob("Difference | model vs ZRA",color = "black", face = "bold", size = 16))
+```
+#Table 2 R2, RMSE, P
+```{r}
+library(Metrics)
+microbe_sum10_p <-microbe_sum10 %>%
+  filter(GridCell==2)
+microbe_sum10_o <-microbe_sum10 %>%
+  filter(GridCell==3)
+colnames(microbe_sum10_p)
+
+microbe_sum9_p <-microbe_sum9 %>%
+  filter(GridCell==2)
+microbe_sum9_o <-microbe_sum9 %>%
+  filter(GridCell==3)
+
+microbe_sum6_p <-microbe_sum6 %>%
+  filter(GridCell==2)
+microbe_sum6_o <-microbe_sum6 %>%
+  filter(GridCell==3)
+
+microbe_sum1_p <-microbe_sum1 %>%
+  filter(GridCell==2)
+microbe_sum1_o <-microbe_sum1 %>%
+  filter(GridCell==3)
+
+
+fit_plant10 <- lm(potential ~ total_microbes, microbe_sum10_p)
+summary(fit_plant10)
+fit_open10  <- lm(potential ~ total_microbes, microbe_sum10_o)
+summary(fit_open10)
+
+fit_plant9 <- lm(potential ~ total_microbes, microbe_sum9_p)
+summary(fit_plant9)
+fit_open9  <- lm(potential ~ total_microbes, microbe_sum9_o)
+summary(fit_open9)
+
+fit_plant6 <- lm(potential ~ total_microbes, microbe_sum6_p)
+summary(fit_plant6)
+fit_open6  <- lm(potential ~ total_microbes, microbe_sum6_o)
+summary(fit_open6)
+
+fit_plant1 <- lm(potential ~ total_microbes, microbe_sum1_p)
+summary(fit_plant1)
+fit_open1  <- lm(potential ~ total_microbes, microbe_sum1_o)
+summary(fit_open1)
+
+summary(fit_plant1)$r.squared
+summary(fit_open1)$r.squared
+rmse_1p <- rmse(microbe_sum1_p$potential,
+                predict(fit_plant1))
+rmse_1o <- rmse(microbe_sum1_o$potential,
+                predict(fit_open1))
+
+#rmse_1p <- rmse(microbe_sum1_p$potential, microbe_sum1_p$total_microbes)
+#rmse_1o <- rmse(microbe_sum1_o$potential, microbe_sum1_o$total_microbes)
+
+summary(fit_plant6)$r.squared
+summary(fit_open6)$r.squared
+rmse_6p <- rmse(microbe_sum6_p$potential,
+                predict(fit_plant6))
+rmse_6o <- rmse(microbe_sum6_o$potential,
+                predict(fit_open6))
+
+
+summary(fit_plant9)$r.squared
+summary(fit_open9)$r.squared
+rmse_9p <- rmse(microbe_sum9_p$potential,
+                predict(fit_plant9))
+
+rmse_9o <- rmse(microbe_sum9_o$potential,
+                predict(fit_open9))
+
+summary(fit_plant10)$r.squared
+summary(fit_open10)$r.squared
+rmse_10p <- rmse(microbe_sum10_p$potential,
+                predict(fit_plant10))
+
+rmse_10o <- rmse(microbe_sum10_o$potential,
+                predict(fit_open10))
+```
+#activity~water
+```{r}
+microbe_sum1_p$time_hour <-microbe_sum1_p$datetime
+microbe_sum1_o$time_hour <-microbe_sum1_o$datetime
+microbe_sum6_p$time_hour <-microbe_sum6_p$datetime
+microbe_sum6_o$time_hour <-microbe_sum6_o$datetime
+microbe_sum9_p$time_hour <-microbe_sum9_p$datetime
+microbe_sum9_o$time_hour <-microbe_sum9_o$datetime
+microbe_sum10_p$time_hour <-microbe_sum10_p$datetime
+microbe_sum10_o$time_hour <-microbe_sum10_o$datetime
+
+water_activity1p<-merge(x = microbe_sum1_p, y = ZRA_1, by=c("time_hour"))
+
+```
+#e- short year
+```{r}
+# only TEA data, not trimmed to match ZRA data presence. but it does match same date range 9/22-12/22
+TEAs <- water %>%
+  left_join(oxygen %>% select(time_hour, O2_1, O2_6, O2_9, O2_10),by = "time_hour") %>%
+  left_join(no3_1 %>% select(time_hour, ZNO3S1),by = "time_hour")%>%
+  left_join(no3_6 %>% select(time_hour, ZNO3S6),by = "time_hour")%>%
+  left_join(no3_9 %>% select(time_hour, ZNO3S9),by = "time_hour")%>%
+   left_join(no3_10 %>% select(time_hour, ZNO3S10),by = "time_hour")
+
+
+TEA_short <- TEAs %>%
+  filter(
+   time_hour >= as.POSIXct("2023-09-22 00:00:00") &
+   time_hour <= as.POSIXct("2023-12-22 23:59:59"))
+
+
+ggplot(complete1, aes(x = time_hour, y = O2_1)) +
+  geom_point(size=1) +
+  geom_jitter()+
+  labs(y = expression(O[2]~"Concentration (g m-3)"), 
+       title = "Layer 1- TEST") +
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+       # axis.text.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+#write.csv(complete1, "C:/Erin/ecosys/Cove/complete1.csv")
+
+# Pivot longer
+oxygen_long <- TEA_short %>%
+  pivot_longer(cols = c(O2_6, O2_9, O2_10),
+               names_to = "O2_Depth",
+               values_to = "O2_value")
+oxygen_long <- oxygen_long %>%
+  mutate(
+    O2_Depth = recode(O2_Depth,
+                   "O2_10"  = "Layer 10",
+                   "O2_6"  = "Layer 6",
+                   "O2_9"  = "Layer 9"),
+    O2_Depth = factor(O2_Depth, levels = c("Layer 6", "Layer 9", "Layer 10")))
+
+o2_all<-ggplot(oxygen_long, aes(x = time_hour, y = O2_value, color = O2_Depth)) +
+  geom_line(size=1) +
+  geom_jitter()+
+  labs(
+    y = expression(O[2]~""~"(" * g~m^-3 * ")"),
+    color="Depth")+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+# Pivot longer
+No3_long <- TEA_short %>%
+  pivot_longer(cols = c(ZNO3S1, ZNO3S6, ZNO3S9,ZNO3S10),
+               names_to = "NO3_Depth",
+               values_to = "NO3_value")
+No3_long$NO3_Depth <-as.factor(No3_long$NO3_Depth )
+levels(No3_long$NO3_Depth )
+
+No3_long <- No3_long %>%
+  mutate(
+    NO3_Depth = recode(NO3_Depth,
+                   "ZNO3S1"  = "Layer 1",
+                   "ZNO3S6"  = "Layer 6",
+                   "ZNO3S9"  = "Layer 9",
+                   "ZNO3S10" = "Layer 10"),
+    NO3_Depth = factor(NO3_Depth, levels = c("Layer 1", "Layer 6", "Layer 9", "Layer 10")))
+
+NO3_all<-ggplot(No3_long, aes(x = time_hour, y = NO3_value, color = NO3_Depth)) +
+  geom_line(size=1) +
+  #geom_jitter()+
+  labs(y = expression(N~""~"(" * mg~L^-1 * ")"),
+       color= "Depth") +
+  theme_bw()+
+  theme(text = element_text(size = 14),
+        axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        legend.position= "right")
+
+oxygen_1b <- ggplot(microbe_long1, aes(x = time_hour, y = O2_1)) +
+  geom_line() +
+  labs(#title="2023 Oxygen Concentration | Soil-water interface", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(text = element_text(size = 14),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+oxygen_6b <- ggplot(microbe_long6, aes(x = time_hour, y = O2_6)) +
+  geom_line() +
+  labs(title="2023 Oxygen Concentration | 0.08 m", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+oxygen_9b <- ggplot(microbe_long9, aes(x = time_hour, y = O2_9)) +
+  geom_line() +
+  labs(title="2023 Oxygen Concentration | 0.15 m", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+oxygen_10b <- ggplot(microbe_long10, aes(x = time_hour, y = O2_10)) +
+  geom_line() +
+  labs(title="2023 Oxygen Concentration | 0.2 m", 
+       y = expression(O[2]~Concentration~(g~m^{-3})))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+water_short<-plot(microbe_long6$time_hour, microbe_long6$V3)
+
+water_short <- ggplot(TEA_short, aes(x = time_hour, y = V3, fill = V3)) +
+  geom_line(size=1) +
+  labs(y=" Water level (m)")+
+  theme_bw()+
+  theme(text = element_text(size = 14),
+    axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        #plot.margin = margin(t = 1, r = 1, b = 1, l = 1),
+        plot.title = element_text(hjust = 0.5))
+
+line_final_D2<-ggarrange(water_short, line1,line6,line9,line10, nrow=5,ncol=1, align="hv", labels="AUTO", common.legend=TRUE, legend="right") #updated Figure 7 with water plot
+
+
+ggarrange(oxygen_1b,NO3_all, ncol=1, nrow=2,align="hv", labels= "AUTO") #appendix H
+#Plot 6
+#ggarrange(water_short, NO3_all, nrow=2, align = "hv",heights = c(0.5, 0.5), common.legend = FALSE)
+
+#DIFFERENCE PLOTS with e acceptors!!
+#ggarrange(ZRAplot1,ZRAplot6,ZRAplot9,ZRAplot10, nrow=2, common.legend=TRUE)
+
+#ggarrange(water_short,oxygen_1b,ZRAplot1, nrow=3, common.legend=FALSE)
+
+#ggarrange(water_short,oxygen_6b,ZRAplot6, nrow=3, common.legend=FALSE)
+
+#ggarrange(water_short,oxygen_9b,ZRAplot9, nrow=3, common.legend=FALSE)
+
+#ggarrange(water_short,oxygen_10b,ZRAplot10, nrow=3, common.legend=FALSE)
+
+```
+
+#soil thickness plot
+```{r}
+depths <- data.frame(
+  Layer = 1:17,
+  Depth_m = c(.01,.02,.04,.05,.07,.08,.10,.14,.15,.20,.29,.43,.63,.93,1.33,1.93,2.84))
+depths$Thickness <- c(depths$Depth_m[1], diff(depths$Depth_m))
+
+ggplot(depths, aes(ymin = Depth_m - Thickness, ymax = Depth_m,
+                   xmin = 0, xmax = 1)) +
+  geom_rect(color = "black", fill = "tan") +
+  scale_y_reverse() +   # Soil profiles go downward
+  coord_fixed() +       # Keep proportional shape
+  labs( y = "Depth (m)")+
+      # title = "Modeled Soil Layer Profile") +
+  theme_bw() +
+  theme(text = element_text(size = 14,family = "serif"),
+        plot.title = element_text(hjust = 0.5,),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank( ))
+
+depths_s <- data.frame(
+  Layer = 1:10,
+  Depth_m = c(.01,.02,.04,.05,.07,.08,.10,.14,.15,.20))
+
+depths_s$Thickness <- c(depths_s$Depth_m[1], diff(depths_s$Depth_m))
+
+ggplot(depths_s, aes(ymin = Depth_m - Thickness, ymax = Depth_m,
+                   xmin = 0, xmax = 1)) +
+  geom_rect(color = "black", fill = "tan") +
+  scale_y_reverse() +   # Soil profiles go downward
+  #coord_fixed() +       # Keep proportional shape
+  labs( y = "Depth (m)") +
+  theme_bw() +
+  theme(text = element_text(size = 14,family = "serif"),
+    plot.title = element_text(hjust = 0.5,),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank( ),
+        axis.title.y=element_blank())
+```
+#temp vs ZRA
+```{r}
+library(stringr)
+w2023<-read.csv("2023_w.csv", header = TRUE)
+w2023<- w2023  [-c(1:3),-c(8:12)]
+
+str(w2023)
+w2023$SJ0405MXDHTHWPR <-as.numeric(w2023$SJ0405MXDHTHWPR)
+w2023 <- w2023 %>%
+  mutate(
+    hour_chr = str_pad(.[[4]], width = 4, pad = "0"),
+    time_hour = if_else(
+      hour_chr == "2400",
+      make_datetime(.[[2]], .[[1]], .[[3]], 0, 0) + days(1),
+      make_datetime(
+        .[[2]],
+        .[[1]],
+        .[[3]],
+        as.integer(substr(hour_chr, 1, 2)),
+        as.integer(substr(hour_chr, 3, 4))))) %>%
+  select(-hour_chr)
+
+temp_zra<-merge(x = w2023, y = ZRA_df, by=c("time_hour"))
+temp_plot <- temp_zra %>%
+  filter(pair %in% c("2 to 4", "2 to 78.2", "2 to 154.4", "2 to 228.6")) %>%
+  mutate(
+    pair = factor(
+      pair,
+      levels = c("2 to 4", "2 to 78.2", "2 to 154.4", "2 to 228.6"),
+      labels = c("Layer 1", "Layer 6", "Layer 9", "Layer 10")))
+
+temp_plot1<-temp_plot%>%
+  filter(pair=="Layer 1")
+temp_plot6<-temp_plot%>%
+  filter(pair=="Layer 6")
+temp_plot9<-temp_plot%>%
+  filter(pair=="Layer 9")
+temp_plot10<-temp_plot%>%
+  filter(pair=="Layer 10")
+
+na_temp <- lm(potential ~ X.3, data = temp_plot9)
+coef(na_temp)[2]  # slope
+coef(na_temp)[1]  # intercept
+summary(na_temp)$r.squared
+summary(na_temp)
+
+library(broom)
+
+r2_df <- temp_plot %>%
+  group_by(pair) %>%
+  do(
+    glance(lm(potential ~ X.3, data = .))
+  ) %>%
+  ungroup() %>%
+  mutate(
+    label = paste0("R² = ", round(r.squared, 2)))
+
+r2_df2 <- r2_df %>%
+  mutate(
+    x_pos = max(temp_plot$X.3, na.rm = TRUE),
+    y_pos = max(temp_plot$potential, na.rm = TRUE) -
+            seq(0, by = diff(range(temp_plot$potential)) * 0.08, length.out = n())
+  )
+
+#dev.off()      # closes the current graphics device
+#graphics.off() # closes *all* open graphics devices
+ggplot(temp_plot, aes(x = X.3, y = potential, color = pair)) +
+  geom_point(alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+ geom_text(
+  data = r2_df2,
+  aes(x = x_pos, y = y_pos, label = label, color = pair),
+  hjust = 1,
+  show.legend = FALSE)+
+  labs(
+    x = "Temperature (C)",
+    y = "ZRA Current (nA)",
+    color = "Depth") +
+  theme_classic()
+```
+
+#________________
+#UNUSED
+##limited full year
+```{r}
+break
+Soil1_open_L<-lim4 %>%
+  filter(Soil=="1" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_L$time_hour <- as.Date(Soil1_open_L$DOY - 1, origin = paste0(Soil1_open_L$Year, "-01-01")) + hours(Soil1_open_L$HOUR - 1)
+
+df1_long_L <- Soil1_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L1<-ggplot(df1_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = " 0.01 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_L<-lim4 %>%
+  filter(Soil=="6" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_L$time_hour <- as.Date(Soil6_open_L$DOY - 1, origin = paste0(Soil6_open_L$Year, "-01-01")) + hours(Soil6_open_L$HOUR - 1)
+
+df6_long_L <- Soil6_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L6<-ggplot(df6_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.08 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_L<-lim4 %>%
+  filter(Soil=="9" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_L$time_hour <- as.Date(Soil9_open_L$DOY - 1, origin = paste0(Soil9_open_L$Year, "-01-01")) + hours(Soil9_open_L$HOUR - 1)
+
+df9_long_L <- Soil9_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L9<-ggplot(df9_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.15 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 10
+Soil10_open_L<-lim4 %>%
+  filter(Soil=="10" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_L$time_hour <- as.Date(Soil10_open_L$DOY - 1, origin = paste0(Soil10_open_L$Year, "-01-01")) + hours(Soil10_open_L$HOUR - 1)
+
+df10_long_L <- Soil10_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L10<-ggplot(df10_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.2 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+     axis.text.x=element_blank(),
+    axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+#ggarrange(L1,L6,L9,L10, common.legend = TRUE)
+
+```
+##unlimited +ZRA
+```{r}
+#UNLIMITED merging!
+unlimited_merge1<-merge(x = Soil1_open_U, y = ZRA_1, by=c("time_hour"))
+unlimited_merge6<-merge(x = Soil6_open_U, y = ZRA_6, by=c("time_hour"))
+unlimited_merge9<-merge(x = Soil9_open_U, y = ZRA_9, by=c("time_hour"))
+unlimited_merge10<-merge(x = Soil10_open_U, y = ZRA_10, by=c("time_hour"))
+
+ #Convert to long format for stacked area
+unlimited_merge1_long <- unlimited_merge1 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+unlimited_merge6_long <- unlimited_merge6 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+unlimited_merge9_long <- unlimited_merge9 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+unlimited_merge10_long <- unlimited_merge10 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+# Plot
+# find ranges
+range_microbe <- range(unlimited_merge6_long$Value, na.rm = TRUE)
+range_potential <- range(unlimited_merge6_long$potential, na.rm = TRUE)
+
+scale_factor <- diff(range_microbe) / diff(range_potential)
+
+Unlim_ZRA1 <-ggplot(unlimited_merge1_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = unlimited_merge1_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil/ hour",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Unlimited/Unstressed", x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+Unlim_ZRA6<-ggplot(unlimited_merge6_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = unlimited_merge6_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil/ hour",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Unlimited/Unstressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+Unlim_ZRA9<-ggplot(unlimited_merge9_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = unlimited_merge9_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil / h",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Unlimited/Unstressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+Unlim_ZRA10<-ggplot(unlimited_merge10_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = unlimited_merge10_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil/ hour",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Unlimited/Unstressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+ggarrange(Unlim_ZRA1,Unlim_ZRA6,Unlim_ZRA9,Unlim_ZRA10, nrow=2, common.legend=TRUE)
+#ggarrange(water_short,oxygen_1b,Unlim_ZRA1, nrow=3, common.legend=FALSE)
+#ggarrange(water_short,oxygen_6b,Unlim_ZRA6, nrow=3, common.legend=FALSE)
+#ggarrange(water_short,oxygen_9b,Unlim_ZRA9, nrow=3, common.legend=FALSE)
+#ggarrange(water_short,oxygen_10b,Unlim_ZRA10, nrow=3, common.legend=FALSE)
+
+
+```
+###Line graphs
+```{r}
+# Collapse microbes into a single summed column
+microbe_sum_U <- unlimited_merge1_long %>%
+  group_by(time_hour) %>%
+  summarise(Microbe_total = sum(Value, na.rm = TRUE),
+            potential = first(potential)) %>%
+  ungroup()
+
+microbe_sum_U6 <- unlimited_merge6_long %>%
+  group_by(time_hour) %>%
+  summarise(Microbe_total = sum(Value, na.rm = TRUE),
+            potential = first(potential)) %>%
+  ungroup()
+
+microbe_sum_U9 <- unlimited_merge9_long %>%
+  group_by(time_hour) %>%
+  summarise(Microbe_total = sum(Value, na.rm = TRUE),
+            potential = first(potential)) %>%
+  ungroup()
+
+microbe_sum_U10 <- unlimited_merge10_long %>%
+  group_by(time_hour) %>%
+  summarise(Microbe_total = sum(Value, na.rm = TRUE),
+            potential = first(potential)) %>%
+  ungroup()
+
+scale_factor_U <- max(microbe_sum_U$Microbe_total, na.rm = TRUE) /max(microbe_sum_U$potential, na.rm = TRUE)
+
+scale_factor_U6 <- max(microbe_sum_U6$Microbe_total, na.rm = TRUE) /max(microbe_sum_U6$potential, na.rm = TRUE)
+
+scale_factor_U9 <- max(microbe_sum_U9$Microbe_total, na.rm = TRUE) /max(microbe_sum_U9$potential, na.rm = TRUE)
+
+scale_factor_U10 <- max(microbe_sum_U10$Microbe_total, na.rm = TRUE) /max(microbe_sum_U10$potential, na.rm = TRUE)
+
+line_U1<- ggplot(microbe_sum_U, aes(x = as.POSIXct(time_hour))) +
+  geom_line(aes(y = Microbe_total), color = "red", linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor_U), color = "black", linewidth = 0.7) +
+  scale_y_continuous(
+    name = "g C Soil / hour",
+    sec.axis = sec_axis(~ . / scale_factor_U, name = "Electrode Potential")) +
+  theme_bw() +
+  labs(title = "model soil depth=0.01 m; electrode = 2 to 4") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x = element_blank(), 
+    axis.text.x = element_blank(),
+    axis.title.y.right = element_blank(),
+    axis.title.y.left =  element_text(color = "red"),
+    axis.text.y.left  = element_text(color = "red"),
+    axis.ticks.y.left = element_line(color = "red"))+
+  guides(fill = guide_legend(nrow = 1))
+
+
+line_U6<- ggplot(microbe_sum_U6, aes(x =as.POSIXct(time_hour)))+
+  geom_line(aes(y = Microbe_total), color = "red", linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor_U6), color = "black", linewidth = 0.7) +
+  scale_y_continuous(
+    name = "g C Soil / hour",
+    sec.axis = sec_axis(~ . / scale_factor_U6, name = "Electrode Potential")) +
+  theme_bw() +
+  labs(title = "model soil depth=0.08 m; electrode = 2 to 78.2") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x = element_blank(), 
+    #axis.title.y.left =  element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y = element_text(color = "red"),
+    axis.text.y.left  = element_text(color = "red"),
+    axis.ticks.y.left = element_line(color = "red"),
+    axis.title.y.right=element_blank())
+
+line_U9<- ggplot(microbe_sum_U9, aes(x = as.POSIXct(time_hour))) +
+  geom_line(aes(y = Microbe_total), color = "red", linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor_U9), color = "black", linewidth = 0.7) +
+  scale_y_continuous(
+    name = "g C Soil / hour",
+    sec.axis = sec_axis(~ . / scale_factor_U9, name = "Electrode Potential")) +
+  theme_bw() +
+  labs(title = "model soil depth=0.15 m; electrode = 2 to 154.4") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.title.y.left =  element_text(color = "red"),
+    axis.title.y.right = element_blank(),
+    axis.text.y.left  = element_text(color = "red"),
+    axis.ticks.y.left = element_line(color = "red"))
+
+line_U10<- ggplot(microbe_sum_U10, aes(x = as.POSIXct(time_hour))) +
+  geom_line(aes(y = Microbe_total), color = "red", linewidth = 0.7) +
+  geom_line(aes(y = potential * scale_factor_U10), color = "black", linewidth = 0.7) +
+  scale_y_continuous(
+    name = "g C Soil / hour",
+    sec.axis = sec_axis(~ . / scale_factor_U10, name = "Electrode Potential"))+
+  theme_bw() +
+  labs(title = "model soil depth=0.2 m; electrode = 2 to 228.6") +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x = element_blank(),
+    #axis.text.x = element_blank(),
+   axis.title.y = element_text(color = "red"),
+    axis.text.y.left  = element_text(color = "red"),
+    axis.ticks.y.left = element_line(color = "red"),
+    axis.title.y.right = element_blank())
+
+line_final_U<-ggarrange(line_U1,line_U6,line_U9,line_U10, nrow=4,ncol=1, align="hv")
+line_final_Ub<- annotate_figure(line_final_U,
+                               top = text_grob("Unlimited/Unstressed | model vs ZRA",
+                               color = "black", face = "bold", size = 16))
+
+ggarrange(line_final_U,line_final_D, align = "hv")
+```
+##limited +ZRA
+```{r}
+#UNLIMITED merging!
+limited_merge1<-merge(x = Soil1_open_L, y = ZRA_1, by=c("time_hour"))
+limited_merge6<-merge(x = Soil6_open_L, y = ZRA_6, by=c("time_hour"))
+limited_merge9<-merge(x = Soil9_open_L, y = ZRA_9, by=c("time_hour"))
+limited_merge10<-merge(x = Soil10_open_L, y = ZRA_10, by=c("time_hour"))
+
+ #Convert to long format for stacked area
+limited_merge1_long <- limited_merge1 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+limited_merge6_long <- limited_merge6 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+limited_merge9_long <- limited_merge9 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+limited_merge10_long <- limited_merge10 %>%
+  select(time_hour, potential, 7:17) %>%   # cols 7-17 are microbes
+  pivot_longer(cols = 3:13, names_to = "Microbe", values_to = "Value")
+
+# Plot
+# find ranges
+range_microbe <- range(limited_merge6_long$Value, na.rm = TRUE)
+range_potential <- range(limited_merge6_long$potential, na.rm = TRUE)
+
+scale_factor <- diff(range_microbe) / diff(range_potential)
+
+lim_ZRA1 <-ggplot(limited_merge1_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = limited_merge1_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil/ hour",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Limited/Stressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+lim_ZRA6<-ggplot(limited_merge6_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = limited_merge6_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil/ hour",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Limited/Stressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+lim_ZRA9<-ggplot(limited_merge9_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = limited_merge9_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil / h",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Limited/Stressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+lim_ZRA10<-ggplot(limited_merge10_long, aes(x = as.POSIXct(time_hour), y = Value, fill = Microbe)) +
+  geom_area(alpha = 0.8) +
+  geom_line(data = limited_merge10_long, 
+             aes(x = as.POSIXct(time_hour), y = potential * scale_factor, color = "Potential"),
+            linewidth = 0.6) +
+  scale_y_continuous(
+    name = "g C Soil/ hour",
+    sec.axis = sec_axis(~./scale_factor, name = "Electrode Potential")
+  ) +
+  scale_fill_manual(values = c("ACEFEM" = "lightgreen",
+                               "ACEMET" = "khaki",
+                               "ACEN2"  = "lightblue",
+                               "CH4OX"  = "plum",
+                               "FAC_AN" = "orange",
+                               "FUNGI"  = "tan",
+                               "H2MET"  = "pink",
+                               "N2FIX"  = "red",
+                               "NH3OX"  = "violet",
+                               "NO2OX"  = "darkgreen",
+                               "OB_AERO"= "yellow")) +
+  scale_color_manual(values = c("Potential" = "black")) +
+  theme_minimal() +
+  labs(title= "Limited/Stressed",x = "Date", y = "Microbial activity",
+       fill = "Microbe", color = "")+
+  theme_bw()+
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+
+
+#ggarrange(lim_ZRA1,lim_ZRA6,lim_ZRA9,lim_ZRA10, nrow=2, ncol=2, common.legend=TRUE)
+#ggarrange(water_short,oxygen_1b,lim_ZRA1, nrow=3, common.legend=FALSE)
+#ggarrange(water_short,oxygen_6b,lim_ZRA6, nrow=3, common.legend=FALSE)
+#ggarrange(water_short,oxygen_9b,lim_ZRA9, nrow=3, common.legend=FALSE)
+#ggarrange(water_short,oxygen_10b,lim_ZRA10, nrow=3, common.legend=FALSE)
+
+```
+
+#ensemble
+```{r}
+
+plot10<-ggarrange(Unlim_ZRA10,lim_ZRA10,ZRAplot10, nrow=3, common.legend = TRUE)
+plot9<-ggarrange(Unlim_ZRA9,lim_ZRA9,ZRAplot9, nrow=3, common.legend = TRUE)
+plot6<-ggarrange(Unlim_ZRA6,lim_ZRA6,ZRAplot6, nrow=3, common.legend = TRUE)
+plot1<-ggarrange(Unlim_ZRA1,lim_ZRA1,ZRAplot1, nrow=3, common.legend = TRUE)
+
+final10 <- annotate_figure(plot10,
+                top = text_grob("2 m | electrode 2 to 228",
+                               color = "black", face = "bold", size = 16))
+final9 <- annotate_figure(plot9,
+                top = text_grob("0.15 m | electrode 2 to 145",
+                               color = "black", face = "bold", size = 16))
+final6 <- annotate_figure(plot6,
+                top = text_grob("0.08 m | electrode 2 to 78",
+                               color = "black", face = "bold", size = 16))
+final1<- annotate_figure(plot1,
+                  top = text_grob("0.01 m | electrode 2 to 4",
+                               color = "black", face = "bold", size = 16))
+
+```
+#dn
+```{r}
+no3_dn <- read.delim("030102023dn", header=TRUE, sep= "")
+no3_hn <- read.delim("020102023hn", header=TRUE, sep= "")
+no3_dn$DATE <-as.numeric(no3_dn$DATE)
+no3_dn$DATE <- dmy(no3_dn$DATE)
+no3_hn$DATE <-as.numeric(no3_hn$DATE)
+no3_hn$DATE <- dmy(no3_hn$DATE)
+plot(no3_dn$NO3)
+# Pivot longer
+no3_dn_long <- no3_dn %>%
+  select(DOY, DATE, NO3_1, NO3_6, NO3_9,NO3_10)%>%
+    group_by(DATE)%>%
+  pivot_longer(cols = c(NO3_1, NO3_6, NO3_9,NO3_10),
+               names_to = "NO3_Depth",
+               values_to = "NO3_value")
+
+ggplot(no3_dn_long, aes(x = DATE, y = NO3_value, color = NO3_Depth)) +
+  geom_line(size=1) +
+  geom_jitter()+
+  labs(
+    y = expression(NO[3]~""~"(" * gN~m^-2 * ")"),
+    color="Depth")+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        #axis.text.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+```
+#VEG PLOTS
+##unlimited
+```{r}
+break #skip this section
+# Don't use these if you don't need them
+Soil1_open_U<-unlim4 %>%
+  filter(Soil=="1" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET),
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_U$time_hour <- as.Date(Soil1_open_U$DOY - 1, origin = paste0(Soil1_open_U$Year, "-01-01")) + hours(Soil1_open_U$HOUR - 1)
+
+Soil1_open_U2 <- Soil1_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+df1_long_U <- Soil1_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+df1_long_U2 <- Soil1_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U1<-ggplot(df1_long_U, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+ # ylim(0,0.45)+
+  labs(title = "0.01 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) +
+  #guides(fill = guide_legend(nrow = 1))
+    scale_fill_discrete(
+  name = "Microbe")
+
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_U<-unlim4 %>%
+  filter(Soil=="6" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET),
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_U$time_hour <- as.Date(Soil6_open_U$DOY - 1, origin = paste0(Soil6_open_U$Year, "-01-01")) + hours(Soil6_open_U$HOUR - 1)
+
+Soil6_open_U2 <- Soil6_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+
+df6_long_U <- Soil6_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df6_long_U2 <- Soil6_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U6<-ggplot(df6_long_U, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+   # ylim(0,0.45)+
+  labs(title = "0.08 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+    #legend.position = "bottom",
+    #legend.box = "horizontal",
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank())
+  #  axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_U<-unlim4 %>%
+  filter(Soil=="9" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_U$time_hour <- as.Date(Soil9_open_U$DOY - 1, origin = paste0(Soil6_open_U$Year, "-01-01")) + hours(Soil9_open_U$HOUR - 1)
+Soil9_open_U2 <- Soil9_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+
+df9_long_U <- Soil9_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df9_long_U2 <- Soil9_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U9<-ggplot(df9_long_U, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+   # ylim(0,0.45)+
+  labs(title = "0.15 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+   # legend.position = "bottom",
+  #  legend.box = "horizontal",
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank())
+ # guides(fill = guide_legend(nrow = 1))
+
+# SOIL LAYER 10
+U10<-Soil10_open_U<-unlim4 %>%
+  filter(Soil=="10" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_U$time_hour <- as.Date(Soil10_open_U$DOY - 1, origin = paste0(Soil10_open_U$Year, "-01-01")) + hours(Soil10_open_U$HOUR - 1)
+
+Soil10_open_U2 <- Soil10_open_U %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, time_hour)
+
+df10_long_U <- Soil10_open_U %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df10_long_U2 <- Soil10_open_U2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+U10<-ggplot(df10_long_U, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+    ylim(0,0.45)+
+  labs(title = "0.2 m (TEA-unstressed)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+      axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+U10b<-ggplot(df10_long_U, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.2 m (TEA-Unstressed)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(
+   # legend.position = "bottom",
+  #  legend.box = "horizontal",
+    axis.title.x=element_blank()) 
+#  guides(fill = guide_legend(nrow = 1))
+
+ggarrange(U1,U6,U9,U10, common.legend = TRUE)
+```
+##limited
+```{r}
+Soil1_open_L<-lim4 %>%
+  filter(Soil=="1" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_L$time_hour <- as.Date(Soil1_open_L$DOY - 1, origin = paste0(Soil1_open_L$Year, "-01-01")) + hours(Soil1_open_L$HOUR - 1)
+
+df1_long_L <- Soil1_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L1<-ggplot(df1_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = " 0.01 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_L<-lim4 %>%
+  filter(Soil=="6" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_L$time_hour <- as.Date(Soil6_open_L$DOY - 1, origin = paste0(Soil6_open_L$Year, "-01-01")) + hours(Soil6_open_L$HOUR - 1)
+
+df6_long_L <- Soil6_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L6<-ggplot(df6_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.08 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank(),
+    axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_L<-lim4 %>%
+  filter(Soil=="9" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_L$time_hour <- as.Date(Soil9_open_L$DOY - 1, origin = paste0(Soil9_open_L$Year, "-01-01")) + hours(Soil9_open_L$HOUR - 1)
+
+df9_long_L <- Soil9_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L9<-ggplot(df9_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.15 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.x=element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+
+# SOIL LAYER 10
+Soil10_open_L<-lim4 %>%
+  filter(Soil=="10" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_L$time_hour <- as.Date(Soil10_open_L$DOY - 1, origin = paste0(Soil10_open_L$Year, "-01-01")) + hours(Soil10_open_L$HOUR - 1)
+
+df10_long_L <- Soil10_open_L %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+L10<-ggplot(df10_long_L, aes(x = time_hour, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  labs(title = "0.2 m (TEA-Stressed)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+     axis.text.x=element_blank(),
+    axis.title.y= element_blank()) 
+  #guides(fill = guide_legend(nrow = 1))
+
+#ggarrange(L1,L6,L9,L10, common.legend = TRUE)
+
+```
+##difference
+```{r}
+Soil1_open_D<-microbes %>%
+  filter(Soil=="1" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil1_open_D$datetime <- as.Date(Soil1_open_D$DOY - 1, origin = paste0(Soil1_open_D$Year, "-01-01")) + hours(Soil1_open_D$HOUR - 1)
+Soil1_open_D2 <- Soil1_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df1_long_D2 <- Soil1_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D1<-ggplot(df1_long_D, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+   # ylim(0,0.45)+
+  labs(title = "0.01 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+ theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.text.y = element_blank(),
+    axis.title.x=element_blank(),
+    axis.title.y = element_blank(),
+    axis.text.x=element_blank()) 
+
+# SOIL LAYER 6___________________________________________
+Soil6_open_D<-microbes %>%
+  filter(Soil=="6" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil6_open_D$datetime <- as.Date(Soil6_open_D$DOY - 1, origin = paste0(Soil6_open_D$Year, "-01-01")) + hours(Soil6_open_D$HOUR - 1)
+
+Soil6_open_D2 <- Soil6_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df6_long_D <- Soil6_open_D %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df6_long_D2 <- Soil6_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D6<-ggplot(df6_long_D, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+   # ylim(0,0.45)+
+  labs(title = "0.08 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+   theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        plot.title = element_text(hjust = 0.5))+
+  theme(text = element_text(size = 14,family = "serif"),
+    #legend.position = "bottom",
+    #legend.box = "horizontal",
+    axis.title.x=element_blank(), 
+    axis.text.x=element_blank(),
+    axis.text.y=element_blank(),
+    axis.title.y= element_blank()) 
+
+# SOIL LAYER 9___________________________________________
+Soil9_open_D<-microbes %>%
+  filter(Soil=="9" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil9_open_D$datetime <- as.Date(Soil9_open_D$DOY - 1, origin = paste0(Soil9_open_D$Year, "-01-01")) + hours(Soil9_open_D$HOUR - 1)
+
+Soil9_open_D2 <- Soil9_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df9_long_D <- Soil9_open_D %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df9_long_D2 <- Soil9_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D9<-ggplot(df9_long_D, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+#  ylim(0,0.45)+
+  labs(title = "0.15 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    axis.title.y = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y=element_blank(),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank())
+
+  #guides(fill = guide_legend(nrow = 1))
+# SOIL LAYER 10
+Soil10_open_D<-microbes %>%
+  filter(Soil=="10" & GridCell=="2")%>%
+  group_by(Year, DOY, HOUR, GridCell, Soil)%>% 
+  summarise(across(c(OB_AERO, FAC_AN, FUNGI, N2FIX,NH3OX, 
+                     NO2OX, CH4OX, ACEN2, ACEFEM, ACEMET, H2MET ), 
+                   ~ mean(.x, na.rm = TRUE))) %>%
+  ungroup()
+ # summarize(sum_Unlimited= sum(SUM))
+Soil10_open_D$datetime <- as.Date(Soil10_open_D$DOY - 1, origin = paste0(Soil10_open_D$Year, "-01-01")) + hours(Soil10_open_D$HOUR - 1)
+
+Soil10_open_D2 <- Soil10_open_D %>% 
+  select(Year, DOY, HOUR, GridCell, Soil, CH4OX,ACEMET,H2MET, datetime)
+
+df10_long_D <- Soil10_open_D %>%
+  pivot_longer(cols = 6:16, names_to = "Microbe", values_to = "Value")
+
+df10_long_D2 <- Soil10_open_D2 %>%
+  pivot_longer(cols = 6:8, names_to = "Microbe", values_to = "Value")
+
+D10<-ggplot(df10_long_D2, aes(x = datetime, y = Value, fill = Microbe)) +
+  geom_area(position = "stack") +
+  geom_vline(xintercept = as.POSIXct("2023-09-22"), color = "red", linetype = "dashed", linewidth = 1) +
+  #ylim(0,0.45)+
+  labs(title = "0.2 m (Unmet TEA Demand)",
+       x = "Time", y = "g C soil/ h") +
+  theme_minimal()+
+  theme(text = element_text(size = 14,family = "serif"),
+    #egend.position = "bottom",
+    #legebox = "horizontal",
+    plot.title = element_text(hjust = 0.5),
+    axis.title.x=element_blank(),
+    axis.text.y=element_blank(),
+    #axis.text.x=element_blank(),
+    axis.title.y= element_blank())
+
+```
+##PLOT
+```{r}
+make_df <- function(df, level) {
+  df %>%
+    mutate(Level = level,
+           Type = ifelse(GridCell == 2, "Plant", "Open")) %>%
+    filter(Type %in% c("Plant", "Open"))}
+
+plot_df <- bind_rows(
+  make_df(microbe_sum1,  "1"),
+  make_df(microbe_sum6,  "6"),
+  make_df(microbe_sum9,  "9"),
+  make_df(microbe_sum10, "10")
+)
+
+# Compute metrics
+metrics <- plot_df %>%
+  group_by(Level, Type) %>%
+  summarise(
+    fit = list(lm(potential ~ total_microbes, data = cur_data())),
+    .groups = "drop"
+  ) %>%
+  rowwise() %>%
+  mutate(
+    R2   = summary(fit)$r.squared,
+    RMSE = rmse(plot_df$potential[plot_df$Level == Level & plot_df$Type == Type],
+                predict(fit)),
+    label = paste0("R² = ", round(R2, 2), "\nRMSE = ", signif(RMSE, 2)),
+    label_color = ifelse(Type == "Plant", "forestgreen", "darkorange")
+  )
+
+# Compute dynamic y positions per Level
+y_ranges <- plot_df %>%
+  group_by(Level) %>%
+  summarise(
+    max_val = max(potential, na.rm = TRUE),
+    min_val = min(potential, na.rm = TRUE),
+    range_val = max_val - min_val,
+    .groups = "drop"
+  )
+
+metrics <- metrics %>%
+  left_join(y_ranges, by = "Level") %>%
+  mutate(
+      y_pos = ifelse(
+      Type == "Plant",
+      max_val - 0.1 * range_val,  # 10% below max for Plant
+      max_val - 0.5 * range_val # 30% below max for Open
+      ))
+metrics <- metrics %>%
+  mutate(
+    Level = factor(Level, levels = c("1", "6", "9", "10"))
+  )
+
+level_labels <- c(
+  "1"  = "Layer 1 (0.01 m)",
+  "6"  = "Layer 6 (0.08 m)",
+  "9"  = "Layer 9 (0.15 m)",
+  "10" = "Layer 10 (0.2 m)")
+#level_labels <-as.factor(level_labels)
+
+plot_df$Level<-factor(plot_df$Level, levels = c("1", "6", "9", "10"))
+
+stacked<-ggplot(plot_df, aes(x = total_microbes, y = potential, color = Type)) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+  facet_wrap(~ Level, ncol=1, scales = "free")+#, labeller = labeller(Level = level_labels)) +
+  scale_color_manual(values = c("Plant" = "forestgreen", "Open" = "darkorange")) +
+
+  # R² and RMSE labels colored by Type
+  geom_text(
+    data = metrics,
+    aes(x = -Inf, y = y_pos, label = label),
+    color = metrics$label_color,  # literal color
+    hjust = -0.05,
+    size = 3,
+    inherit.aes = FALSE
+  ) +
+
+  labs(
+    x = "Modeled microbial activity (g C/hour)",
+    y = "Observed current (nA)",
+    color = "Grid cell",
+   # title = "Plant vs Open relationships between modeled microbial potential and measured current"
+  ) +
+  theme_bw() +
+  theme(text = element_text(size = 14, family = "serif"),
+    strip.background = element_rect(fill = "grey95"),
+    strip.text = element_text(face = "bold")
+  )
+#ggarrange(line_final_D, stacked, ncol=2, common.legend = TRUE )
+
+legend <- get_legend(line_final_D + theme(legend.position = "top"))
+
+ggarrange(
+  line_final_D + theme(legend.position = "none"),
+  g_plot + theme(legend.position = "none"),
+  legend,
+  ncol = 2
+ # heights = c(1,1,0.2)
+)
+
+
+```
+##Fig 7- PLOT2
+```{r}
+library(ggplot2)
+library(patchwork)
+library(grid)
+library(gtable)
+library(ggpubr)
+library(dplyr)
+library(Metrics)  # for rmse()
+
+# ----------------------------
+# Helper function to make one panel
+# ----------------------------
+make_panel <- function(df, metrics_df, level, show_x = FALSE) {
+  
+  ggplot(
+    df %>% filter(Level == level),
+    aes(x = total_microbes, y = potential, color = Type)
+  ) +
+    geom_point(alpha = 0.4, size = 1) +
+    geom_smooth(method = "lm", se = FALSE, linewidth = 1) +
+    
+    # Plant/Open R² & RMSE labels
+    geom_text(
+      data = metrics_df %>% filter(Level == level),
+      aes(x = -Inf, y = y_pos, label = label),
+      color = metrics_df$label_color[metrics_df$Level == level],
+      hjust = -0.05,
+      size = 12 / .pt,   # 12 pt
+      inherit.aes = FALSE
+    ) +
+    
+    scale_color_manual(values = c("Plant" = "forestgreen", "Open" = "darkorange")) +
+    scale_y_continuous(position = "right") +
+    
+    labs(
+      x = if (show_x) "Modeled microbial activity (g C/hour)" else NULL,
+      y = NULL
+    ) +
+    
+    theme_bw(base_size = 12, base_family = "Times New Roman") +
+    theme(
+      legend.position = "none",
+      axis.title.x = if (show_x) element_text() else element_blank(),
+      axis.text.x  = if (show_x) element_text() else element_blank(),
+      axis.ticks.x = if (show_x) element_line() else element_blank()
+    )
+}
+
+# ----------------------------
+# Make metrics dataframe for R² and RMSE
+# ----------------------------
+metrics <- plot_df %>%
+  group_by(Level, Type) %>%
+  do({
+    fit <- lm(potential ~ total_microbes, data = .)
+    tibble(
+      R2   = summary(fit)$r.squared,
+      RMSE = rmse(.$potential, predict(fit))
+    )
+  }) %>%
+  ungroup() %>%
+  mutate(
+    label = paste0("R² = ", round(R2, 3), "\nRMSE = ", signif(RMSE, 3)),
+    label_color = ifelse(Type == "Plant", "forestgreen", "darkorange")
+  )
+
+# Compute dynamic y positions per Level to avoid overlap
+y_ranges <- plot_df %>%
+  group_by(Level) %>%
+  summarise(
+    max_val = max(potential, na.rm = TRUE),
+    min_val = min(potential, na.rm = TRUE),
+    range_val = max_val - min_val,
+    .groups = "drop"
+  )
+
+metrics <- metrics %>%
+  left_join(y_ranges, by = "Level") %>%
+  mutate(
+    y_pos = ifelse(
+      Type == "Plant",
+      max_val - 0.1 * range_val,
+      max_val - 0.5 * range_val
+    )
+  )
+
+# ----------------------------
+# Build panels
+# ----------------------------
+p1 <- make_panel(plot_df, metrics, "1",  show_x = FALSE)
+p2 <- make_panel(plot_df, metrics, "6",  show_x = FALSE)
+p3 <- make_panel(plot_df, metrics, "9",  show_x = FALSE)
+p4 <- make_panel(plot_df, metrics, "10", show_x = TRUE)
+
+panels <- p1 / p2 / p3 / p4 +
+  plot_layout(guides = "collect")
+
+# ----------------------------
+# Convert to grob
+# ----------------------------
+g <- patchwork::patchworkGrob(panels)
+
+# ----------------------------
+# Add panel letters outside
+# ----------------------------
+g <- gtable_add_cols(g, unit(1.2, "cm"), pos = 0)
+g <- gtable_add_grob(
+  g,
+  grobs = textGrob(
+    c("E", "F", "G", "H"),
+    y = unit(c(0.96, 0.75, 0.5, 0.27), "npc"),  # move letters higher
+    gp = gpar(fontsize = 14, fontface = "bold", fontfamily = "Times New Roman")
+  ),
+  t = 1, b = nrow(g), l = 1
+)
+
+# ----------------------------
+# Add shared right-side Y label
+# ----------------------------
+g <- gtable_add_cols(g, unit(1.2, "cm"), pos = -1)
+g <- gtable_add_grob(
+  g,
+  textGrob(
+    "Observed current (nA)",
+    rot = -90,
+    gp = gpar(fontsize = 12, fontfamily = "Times New Roman")
+  ),
+  t = 1, b = nrow(g), l = ncol(g)
+)
+
+# Wrap gtable into ggplot object so ggarrange can see it
+g_plot <- as_ggplot(g)
+
+# ----------------------------
+# Combine with line_final_D using ggarrange
+# ----------------------------
+final_figure <- ggarrange(
+  line_final_D,
+  g_plot,
+  ncol = 2,
+  widths = c(1, 1),
+  align = "hv",
+  common.legend = TRUE, legend="bottom"
+)
+
+# Display
+final_figure
+
+
+```
