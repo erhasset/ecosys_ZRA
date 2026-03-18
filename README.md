@@ -1,22 +1,23 @@
-# Ecosys Modeling of Microbial Activity in a Freshwater Marsh
+# Ecosys Processed-based Modeling of Microbial Activity in a Freshwater Marsh
 
 ## Overview
-This repository contains code and analysis used to simulate microbial activity and carbon cycling in a freshwater marsh at Old Woman Creek National Estuarine Research Reserve (OWC NERR), Huron, Ohio using the Ecosys process-based ecosystem model.
+This repository contains code and analysis used to simulate microbial activity in the freshwater, temperate marsh Old Woman Creek National Estuarine Research Reserve (OWC NERR) in Huron, Ohio using the ecosys process-based model (Grant 1997).
 
-Model outputs are evaluated using high-frequency electrochemical measurements from a zero-resistance ammetry (ZRA) sensor, which provides near-real-time measurements of microbial electron transfer processes in wetland sediments (via a measurable current). ZRA field measurements used in this project were collected between September and December 2023.
+Ecosys model outputs of microbial activity (g soil C consumed/hourly) are evaluated against high-frequency electrochemical measurements from a zero-resistance ammetry (ZRA) sensor. This novel sensor produces near-real-time measurements of electron transfer processes (current) in wetland sediments at decreasing depths, which we use as a proxy for microbial activity. ZRA field measurements used in this project were collected between September and December 2023.
 
-To ensure the model accurately simulated ecosystem carbon dynamics, the model was first calibrated and evaluated using eddy covariance measurements and chamber-based greenhouse gas flux data collected at Old Woman Creek.
+We first ensured that the model was adequately simulating carbon flux dynamics, evaluated with eddy covariance and chamber measurements, prior to modeling the microbes:
+1. See: https://github.com/erhasset/ecosys_carbon
+2. Hassett, Erin, Gil Bohrer, Lauren Kinsman-Costello, Yvette Onyango, Talia Pope, Chelsea Smith, Justine Missik et al. "Changes in inundation drive carbon dioxide and methane fluxes in a temperate wetland." Science of the Total Environment 915 (2024): 170089.
 
 ---
 
 # What This Project Does
 
-This project integrates process-based ecosystem modeling, field measurements of greenhouse gas fluxes, and electrochemical microbial activity data to evaluate microbial processes in wetland sediments.
+This project integrates process-based modeling and electrochemical microbial activity data to evaluate microbial processes in wetland sediments.
 
 Specifically, this repository includes and/or references workflows to:
 
 - Simulate carbon cycling and microbial processes in a freshwater marsh using the ecosys processed-based model.
-- Evaluate model performance against greenhouse gas flux measurements collected with chambers and eddy covariance instrumentation.
 - Integrate zero-resistance ammetry (ZRA) sensor data to assess microbial electron transfer dynamics in wetland sediments.
 - Optimize key model parameters using Bayesian optimization.
 - Compare modeled microbial activity (g soil C consumed/hourly) with high-frequency (hourly) electrochemical measurements of microbial activity (current, a proxy for microbial activity). 
@@ -69,6 +70,7 @@ The modeling framework builds on previous work:
 
 Hassett E, Bohrer G, Kinsman-Costello L, et al. Changes in inundation drive carbon dioxide and methane fluxes in a temperate wetland. Science of The Total Environment. 2024; 915, 170089. https://doi.org/10.1016/j.scitotenv.2024.170089
 
+Morin, Timothy H., William J. Riley, Robert F. Grant, Zelalem Mekonnen, Kay C. Stefanik, A. Camilo Rey Sanchez, Molly A. Mulhare, Jorge Villa, Kelly Wrighton, and Gil Bohrer. "Water level changes in Lake Erie drive 21st century CO2 and CH4 fluxes from a coastal temperate wetland." Science of the Total Environment 821 (2022): 153087.
 
 ---
 
@@ -95,11 +97,3 @@ ESS-DIVE Dataset
 https://doi.org/10.15485/2568076
 
 ---
-
-# Study Site
-
-All field measurements were conducted at Old Woman Creek National Estuarine Research Reserve (OWC NERR), a freshwater estuary located along the southern shore of Lake Erie in Huron, Ohio, USA.
-
----
-
-# Repository Structure
