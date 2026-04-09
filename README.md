@@ -40,6 +40,9 @@ By combining ecosystem modeling, Bayesian optimization, and electrochemical micr
 
 # Data Used for Model Evaluation
 
+All data files and code have been uploaded to Zenodo: https://zenodo.org/records/19487085 
+Hassett, E., Adesanmi, B., Monty-Bromer, C., Senko, J., Kinsman-Costello, L., Bohrer, G., Mekonnen, Z., Brenton, A., & Morin, T. (2026). Wetland in situ zero resistance ammetry measurements demonstrate hourly microbial activity and can be used to evaluate process-based model microbial respiration estimates [Data set]. Zenodo. https://doi.org/10.5281/zenodo.19487085
+
 ## Chamber Flux Measurements
 
 Hassett E ; Villa J ; Onyango Y ; Eberhard E ; Bohrer G ; Kinsman-Costello L ; Morin T (2023)  
