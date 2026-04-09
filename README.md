@@ -9,6 +9,11 @@ We first ensured that the model was adequately simulating carbon flux dynamics, 
 1. See: https://github.com/erhasset/ecosys_carbon
 2. Hassett, Erin, Gil Bohrer, Lauren Kinsman-Costello, Yvette Onyango, Talia Pope, Chelsea Smith, Justine Missik et al. "Changes in inundation drive carbon dioxide and methane fluxes in a temperate wetland." Science of the Total Environment 915 (2024): 170089.
 
+All files associated to this project have been uploaded to the Zenodo repository: 
+Hassett, E., Adesanmi, B., Monty-Bromer, C., Senko, J., Kinsman-Costello, L., Bohrer, G., Mekonnen, Z., Brenton, A., & Morin, T. (2026). Wetland in situ zero resistance ammetry measurements demonstrate hourly microbial activity and can be used to evaluate process-based model microbial respiration estimates [Data set]. Zenodo. https://doi.org/10.5281/zenodo.19487085
+
+Contact Erin Hassett with additonal questions or data requests: erhasset@syr.edu
+
 ---
 
 # What This Project Does
